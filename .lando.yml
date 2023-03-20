@@ -1,0 +1,45 @@
+name: my-first-laravel-app
+recipe: laravel
+compose:
+    - docker-compose.yml
+proxy:
+    appserver:
+        - 'platform.lndo.site'
+        - '*.platform.lndo.site'
+config:
+    php: '8.0'
+    via: apache
+    webroot: public
+services:
+    database:
+        portforward: 3306
+tooling:
+    deploy:
+        description: Initialize sihq for local development
+        cmd:
+            - appserver: 'php vendor/bin/vapor deploy production'
+    migrate:
+        description: Initialize sihq for local development
+        cmd:
+            - appserver: 'php artisan migrate'
+            - appserver: 'php artisan migrate --tenants'
+    install:
+        description: Install
+        cmd:
+            - appserver: 'php artisan migrate'
+            - appserver: 'php artisan install'
+    seed:
+        description: Seed db
+        cmd:
+            - appserver: 'php artisan db:seed'
+            - appserver: 'php artisan db:seed --tenants'
+    queue:
+        description: Queue
+        cmd:
+            # - appserver: "php artisan queue:drop-jobs"
+            - appserver: 'php artisan queue:work --tries=1'
+    fix-imagick:
+        service: appserver
+        description: Update Imagick policy for PDF
+        cmd: sed -i 's/<policy domain="coder" rights="none" pattern="PDF" \/>/<policy domain="coder" rights="read|write" pattern="PDF" \/>/g' /etc/ImageMagick-6/policy.xml
+        user: root
